@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { getCourses, deleteCourse } from "../services/api.ts";
 import CourseCard from "../components/CourseCard.tsx";
 import AddCourseModal from "../components/AddCourseModal.tsx";
@@ -15,18 +15,32 @@ type Course = {
 
 const HomePage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const coursesPerPage = 6;
 
   useEffect(() => {
     fetchCourses();
   }, []);
 
+  // Usamos useCallback para que no se cree una nueva instancia de la función cada vez que renderizamos
+  const paginateCourses = useCallback(() => {
+    const startIndex = (currentPage - 1) * coursesPerPage;
+    const endIndex = startIndex + coursesPerPage;
+    setDisplayedCourses(courses.slice(startIndex, endIndex));
+  }, [courses, currentPage]);
+
+  useEffect(() => {
+    paginateCourses();
+  }, [courses, currentPage, paginateCourses]); // Agregamos paginateCourses a las dependencias
+
   const fetchCourses = async () => {
     const data = await getCourses();
-    setCourses(data);
+    setCourses(data); // Aquí obtienes todos los cursos
   };
 
   const handleCourseAdded = (course: Course) => {
@@ -55,6 +69,18 @@ const HomePage: React.FC = () => {
       setCourses((prevCourses) => prevCourses.filter((course) => course.id !== selectedCourse.id));
       setIsDeleteModalOpen(false);
       setSelectedCourse(null);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage * coursesPerPage < courses.length) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
     }
   };
 
@@ -87,7 +113,7 @@ const HomePage: React.FC = () => {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-        {courses.map((course) => (
+        {displayedCourses.map((course) => (
           <CourseCard
             key={course.id}
             course={course}
@@ -95,6 +121,26 @@ const HomePage: React.FC = () => {
             onDelete={() => handleDeleteCourse(course)}
           />
         ))}
+      </div>
+
+      <div className="pagination flex justify-center mt-4">
+        <button
+          onClick={handlePrevPage}
+          disabled={currentPage === 1}
+          className="px-4 py-2 bg-blue-500 text-white rounded mr-2 disabled:bg-gray-400"
+        >
+          Anterior
+        </button>
+        <span className="px-4 py-2 text-lg">
+          Página {currentPage} de {Math.ceil(courses.length / coursesPerPage)}
+        </span>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage * coursesPerPage >= courses.length}
+          className="px-4 py-2 bg-blue-500 text-white rounded ml-2 disabled:bg-gray-400"
+        >
+          Siguiente
+        </button>
       </div>
     </div>
   );
