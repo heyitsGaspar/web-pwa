@@ -1,8 +1,28 @@
 import axios from "axios";
+import { Course } from "../models/types.ts";
 
-export const getCourses = async () => {
-  const response = await axios.get("https://pwa-api-production.up.railway.app/api/courses");
-  return response.data;
+const API_URL = "https://pwa-api-production.up.railway.app/api/courses";
+// Método para obtener los cursos, intentando desde la API y luego el caché si falla
+export const getCourses = async (): Promise<Course[]> => {
+  try {
+    // Intenta obtener los cursos desde la API
+    const response = await axios.get(API_URL);
+    const courses: Course[] = response.data;
+    return courses;
+  } catch (error) {
+    console.error("Error al obtener los cursos desde la API, cargando desde el caché:", error);
+
+    // Intentar cargar desde el caché en caso de error (offline)
+    if ('caches' in window) {
+      const cache = await caches.open('courses-cache-v1');
+      const cachedResponse = await cache.match(API_URL);
+      if (cachedResponse) {
+        return cachedResponse.json();
+      }
+    }
+
+    throw new Error("No hay datos en caché y no se pudo acceder a la API.");
+  }
 };
 
 // Agregar un curso
