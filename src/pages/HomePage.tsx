@@ -4,6 +4,7 @@ import CourseCard from "../components/CourseCard.tsx";
 import AddCourseModal from "../components/AddCourseModal.tsx";
 import EditCourseModal from "../components/EditCourseModal.tsx";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal.tsx";
+import Filters from "../components/Filters.tsx"; // Importa el componente de filtros
 
 type Course = {
   id: number;
@@ -21,26 +22,41 @@ const HomePage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [priceOrder, setPriceOrder] = useState<string>("asc");
   const coursesPerPage = 6;
+
+  // Memoizamos paginateCourses para que no se re-defina en cada renderización
+  const paginateCourses = useCallback(() => {
+    const filteredCourses = courses
+      .filter((course) => {
+        const categoryMatch = categoryFilter ? course.categoria === categoryFilter : true;
+        return categoryMatch;
+      })
+      .sort((a, b) => {
+        if (priceOrder === "asc") {
+          return parseFloat(a.precio) - parseFloat(b.precio);
+        } else {
+          return parseFloat(b.precio) - parseFloat(a.precio);
+        }
+      })
+      .slice((currentPage - 1) * coursesPerPage, currentPage * coursesPerPage);
+    
+    setDisplayedCourses(filteredCourses);
+  }, [courses, currentPage, categoryFilter, priceOrder]);
 
   useEffect(() => {
     fetchCourses();
   }, []);
 
-  // Usamos useCallback para que no se cree una nueva instancia de la función cada vez que renderizamos
-  const paginateCourses = useCallback(() => {
-    const startIndex = (currentPage - 1) * coursesPerPage;
-    const endIndex = startIndex + coursesPerPage;
-    setDisplayedCourses(courses.slice(startIndex, endIndex));
-  }, [courses, currentPage]);
-
+  // Incluimos paginateCourses como dependencia
   useEffect(() => {
     paginateCourses();
-  }, [courses, currentPage, paginateCourses]); // Agregamos paginateCourses a las dependencias
+  }, [paginateCourses]);
 
   const fetchCourses = async () => {
     const data = await getCourses();
-    setCourses(data); // Aquí obtienes todos los cursos
+    setCourses(data);
   };
 
   const handleCourseAdded = (course: Course) => {
@@ -87,6 +103,15 @@ const HomePage: React.FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold">Cursos Disponibles</h1>
+      
+      {/* Filtros */}
+      <Filters
+        category={categoryFilter}
+        priceOrder={priceOrder}
+        onCategoryChange={(e) => setCategoryFilter(e.target.value)}
+        onPriceOrderChange={(e) => setPriceOrder(e.target.value)}
+      />
+
       <button onClick={() => setIsAddModalOpen(true)} className="bg-blue-500 text-white py-2 px-4 rounded my-4">
         Agregar Curso
       </button>
