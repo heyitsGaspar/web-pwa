@@ -4,7 +4,8 @@ import CourseCard from "../components/CourseCard.tsx";
 import AddCourseModal from "../components/AddCourseModal.tsx";
 import EditCourseModal from "../components/EditCourseModal.tsx";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal.tsx";
-import Filters from "../components/Filters.tsx"; // Importa el componente de filtros
+import Filters from "../components/Filters.tsx";
+import SearchBar from "../components/SearchBar.tsx";
 
 type Course = {
   id: number;
@@ -24,14 +25,15 @@ const HomePage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [priceOrder, setPriceOrder] = useState<string>("asc");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const coursesPerPage = 6;
 
-  // Memoizamos paginateCourses para que no se re-defina en cada renderización
   const paginateCourses = useCallback(() => {
     const filteredCourses = courses
       .filter((course) => {
         const categoryMatch = categoryFilter ? course.categoria === categoryFilter : true;
-        return categoryMatch;
+        const searchMatch = course.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+        return categoryMatch && searchMatch;
       })
       .sort((a, b) => {
         if (priceOrder === "asc") {
@@ -43,13 +45,12 @@ const HomePage: React.FC = () => {
       .slice((currentPage - 1) * coursesPerPage, currentPage * coursesPerPage);
     
     setDisplayedCourses(filteredCourses);
-  }, [courses, currentPage, categoryFilter, priceOrder]);
+  }, [courses, currentPage, categoryFilter, priceOrder, searchTerm]);
 
   useEffect(() => {
     fetchCourses();
   }, []);
 
-  // Incluimos paginateCourses como dependencia
   useEffect(() => {
     paginateCourses();
   }, [paginateCourses]);
@@ -104,7 +105,8 @@ const HomePage: React.FC = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold">Cursos Disponibles</h1>
       
-      {/* Filtros */}
+      <SearchBar searchTerm={searchTerm} onSearchChange={(e) => setSearchTerm(e.target.value)} />
+
       <Filters
         category={categoryFilter}
         priceOrder={priceOrder}
@@ -138,15 +140,22 @@ const HomePage: React.FC = () => {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-        {displayedCourses.map((course) => (
-          <CourseCard
-            key={course.id}
-            course={course}
-            onEdit={() => handleEditCourse(course)}
-            onDelete={() => handleDeleteCourse(course)}
-          />
-        ))}
+        {displayedCourses.length > 0 ? (
+          displayedCourses.map((course) => (
+            <CourseCard
+              key={course.id}
+              course={course}
+              onEdit={() => handleEditCourse(course)}
+              onDelete={() => handleDeleteCourse(course)}
+            />
+          ))
+        ) : (
+          <div className="col-span-full flex justify-center items-center my-20">
+            <p className="text-center text-gray-500">No se encontraron cursos que coincidan con los criterios de búsqueda.</p>
+          </div>
+        )}
       </div>
+
 
       <div className="pagination flex justify-center mt-4">
         <button
