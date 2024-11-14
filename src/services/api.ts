@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Course } from "../models/types.ts";
 
-const API_URL = "https://pwa-api-production.up.railway.app/api/courses";
+const API_URL = "https://pwa-api-production-f5fc.up.railway.app/api/courses";
 // Método para obtener los cursos, intentando desde la API y luego el caché si falla
 export const getCourses = async (): Promise<Course[]> => {
   try {
