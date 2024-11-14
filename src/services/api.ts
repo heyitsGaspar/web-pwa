@@ -32,6 +32,7 @@ export const addCourse = async (course: { nombre: string; precio: string; catego
       return response.data;
     } catch (error) {
       console.error("Error al agregar el curso:", error);
+      alert("Error conéctate a internet e intentalo de nuevo");
       throw error;
     }
   };
