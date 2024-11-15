@@ -1,15 +1,15 @@
 import axios from "axios";
 import { Course } from "../models/types.ts";
 
-const API_URL = 'https://pwa-api-production-f5fc.up.railway.app/api/courses';
-
+ const API_URL = 'https://pwa-api-production.up.railway.app/api/courses';
+// const API_URL = 'http://localhost:3000/api/courses';
 // Método para obtener los cursos, intentando desde la API y luego el caché si falla
 
 export const getCourses = async (): Promise<Course[]> => {
   try {
     // Eliminar el caché antes de hacer la solicitud para obtener la versión más reciente
     if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v2');
+      const cache = await caches.open('courses-cache-v3');
       await cache.delete(API_URL); // Elimina el caché de la API
     }
 
@@ -19,7 +19,7 @@ export const getCourses = async (): Promise<Course[]> => {
 
     // Después de obtener los cursos, los guardamos en el caché para futuras solicitudes
     if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v2');
+      const cache = await caches.open('courses-cache-v3');
       cache.put(API_URL, new Response(JSON.stringify(courses)));
     }
 
@@ -29,7 +29,7 @@ export const getCourses = async (): Promise<Course[]> => {
 
     // Intentar cargar desde el caché en caso de error (offline)
     if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v2');
+      const cache = await caches.open('courses-cache-v3');
       const cachedResponse = await cache.match(API_URL);
       if (cachedResponse) {
         return cachedResponse.json();
@@ -50,7 +50,7 @@ export const addCourse = async (course: { nombre: string; precio: string; catego
 
     // Actualizar el caché con el nuevo curso
     if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v2');
+      const cache = await caches.open('courses-cache-v3');
       const cachedResponse = await cache.match(API_URL);
       if (cachedResponse) {
         const cachedData = await cachedResponse.json();
@@ -83,7 +83,7 @@ export const editCourse = async (id: number, updatedCourse: { nombre: string; pr
 
   // Actualizar el caché con el curso actualizado
   if ('caches' in window) {
-    const cache = await caches.open('courses-cache-v2');
+    const cache = await caches.open('courses-cache-v3');
     const cachedResponse = await cache.match(API_URL);
     if (cachedResponse) {
       const cachedData = await cachedResponse.json();
@@ -110,7 +110,7 @@ export const deleteCourse = async (id: number) => {
 
   // Actualizar el caché después de eliminar el curso
   if ('caches' in window) {
-    const cache = await caches.open('courses-cache-v2');
+    const cache = await caches.open('courses-cache-v3');
     const cachedResponse = await cache.match(API_URL);
     if (cachedResponse) {
       const cachedData = await cachedResponse.json();
