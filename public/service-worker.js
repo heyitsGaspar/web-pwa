@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = "courses-cache-v3";
+const CACHE_NAME = "courses-cache-v4";
 
 const urlsToCache = [
   "/",
