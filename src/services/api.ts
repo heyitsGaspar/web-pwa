@@ -1,8 +1,8 @@
 import axios from "axios";
 import { Course } from "../models/types.ts";
 
-const API_URL = 'https://pwa-api-production-courses.up.railway.app/api/courses';
-// const API_URL = 'http://localhost:3000/api/courses';
+// const API_URL = 'https://pwa-api-production-courses.up.railway.app/api/courses';
+ const API_URL = 'http://localhost:3000/api/courses';
 // const API_URL =
 //   window.location.origin.includes("localhost")
 //     ? "http://localhost:3000/api/courses"
@@ -11,38 +11,66 @@ const API_URL = 'https://pwa-api-production-courses.up.railway.app/api/courses';
 
 export const getCourses = async (): Promise<Course[]> => {
   try {
-    // Eliminar el caché antes de hacer la solicitud para obtener la versión más reciente
-    if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v4');
-      await cache.delete(API_URL); // Elimina el caché de la API
-    }
-
-    // Intenta obtener los cursos desde la API
     const response = await axios.get(API_URL);
     const courses: Course[] = response.data;
 
-    // Después de obtener los cursos, los guardamos en el caché para futuras solicitudes
-    if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v4');
+    // Actualiza el caché con los datos más recientes
+    if ("caches" in window) {
+      const cache = await caches.open("courses-cache-v4");
       cache.put(API_URL, new Response(JSON.stringify(courses)));
     }
 
     return courses;
   } catch (error) {
-    console.error("Error al obtener los cursos desde la API, cargando desde el caché:", error);
+    console.error("Error al obtener los cursos, intentando cargar desde el caché:", error);
 
-    // Intentar cargar desde el caché en caso de error (offline)
-    if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v4');
+    if ("caches" in window) {
+      const cache = await caches.open("courses-cache-v4");
       const cachedResponse = await cache.match(API_URL);
       if (cachedResponse) {
         return cachedResponse.json();
       }
     }
 
-    throw new Error("No hay datos en caché y no se pudo acceder a la API.");
+    throw new Error("No hay datos disponibles en caché ni en la API.");
   }
 };
+
+
+// export const getCourses = async (): Promise<Course[]> => {
+//   try {
+//     // Eliminar el caché antes de hacer la solicitud para obtener la versión más reciente
+//     if ('caches' in window) {
+//       const cache = await caches.open('courses-cache-v5');
+//       await cache.delete(API_URL); // Elimina el caché de la API
+//     }
+
+//     // Intenta obtener los cursos desde la API
+//     const response = await axios.get(API_URL);
+//     const courses: Course[] = response.data;
+
+//     // Después de obtener los cursos, los guardamos en el caché para futuras solicitudes
+//     if ('caches' in window) {
+//       const cache = await caches.open('courses-cache-v5');
+//       cache.put(API_URL, new Response(JSON.stringify(courses)));
+//     }
+
+//     return courses;
+//   } catch (error) {
+//     console.error("Error al obtener los cursos desde la API, cargando desde el caché:", error);
+
+//     // Intentar cargar desde el caché en caso de error (offline)
+//     if ('caches' in window) {
+//       const cache = await caches.open('courses-cache-v5');
+//       const cachedResponse = await cache.match(API_URL);
+//       if (cachedResponse) {
+//         return cachedResponse.json();
+//       }
+//     }
+
+//     throw new Error("No hay datos en caché y no se pudo acceder a la API.");
+//   }
+// };
 
 
 
@@ -54,7 +82,7 @@ export const addCourse = async (course: { nombre: string; precio: string; catego
 
     // Actualizar el caché con el nuevo curso
     if ('caches' in window) {
-      const cache = await caches.open('courses-cache-v4');
+      const cache = await caches.open('courses-cache-v5');
       const cachedResponse = await cache.match(API_URL);
       if (cachedResponse) {
         const cachedData = await cachedResponse.json();
@@ -73,7 +101,7 @@ export const addCourse = async (course: { nombre: string; precio: string; catego
 
 // Editar un curso
 export const editCourse = async (id: number, updatedCourse: { nombre: string; precio: string; categoria: string; autor: string }) => {
-  const response = await fetch(`https://pwa-api-production-courses.up.railway.app/api/courses/${id}`, {
+  const response = await fetch(`http://localhost:3000/api/courses/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -87,7 +115,7 @@ export const editCourse = async (id: number, updatedCourse: { nombre: string; pr
 
   // Actualizar el caché con el curso actualizado
   if ('caches' in window) {
-    const cache = await caches.open('courses-cache-v4');
+    const cache = await caches.open('courses-cache-v5');
     const cachedResponse = await cache.match(API_URL);
     if (cachedResponse) {
       const cachedData = await cachedResponse.json();
@@ -104,7 +132,7 @@ export const editCourse = async (id: number, updatedCourse: { nombre: string; pr
 
 // Eliminar un curso
 export const deleteCourse = async (id: number) => {
-  const response = await fetch(`https://pwa-api-production-courses.up.railway.app/api/courses/${id}`, {
+  const response = await fetch(`http://localhost:3000/api/courses/${id}`, {
     method: "DELETE",
   });
 
@@ -114,7 +142,7 @@ export const deleteCourse = async (id: number) => {
 
   // Actualizar el caché después de eliminar el curso
   if ('caches' in window) {
-    const cache = await caches.open('courses-cache-v4');
+    const cache = await caches.open('courses-cache-v5');
     const cachedResponse = await cache.match(API_URL);
     if (cachedResponse) {
       const cachedData = await cachedResponse.json();

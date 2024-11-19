@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = "courses-cache-v4";
+const CACHE_NAME = "courses-cache-v5";
 
 const urlsToCache = [
   "/",
@@ -39,27 +39,54 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+
 self.addEventListener("fetch", (event) => {
-  // Asegúrate de que la solicitud es 'GET', está en la carpeta 'static', y usa 'http' o 'https'
-  const isValidRoute =
-    event.request.url.includes("/static/") ||
-    event.request.url.startsWith("http://") ||
-    event.request.url.startsWith("https://");
-  if (event.request.method === "GET" && isValidRoute) {
+  if (event.request.method === "GET") {
     event.respondWith(
       caches.match(event.request).then((response) => {
-        // Si el recurso está en caché, lo devuelve, de lo contrario, realiza la solicitud de red
         return (
           response ||
-          fetch(event.request).then((fetchResponse) => {
-            // Clona la respuesta y almacénala en caché
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, fetchResponse.clone());
-              return fetchResponse;
-            });
-          })
+          fetch(event.request)
+            .then((fetchResponse) => {
+              return caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, fetchResponse.clone());
+                return fetchResponse;
+              });
+            })
+            .catch(() => {
+              // Manejar offline o errores
+              if (event.request.url.endsWith(".html")) {
+                return caches.match("/index.html");
+              }
+            })
         );
       })
     );
   }
 });
+
+
+// self.addEventListener("fetch", (event) => {
+//   // Asegúrate de que la solicitud es 'GET', está en la carpeta 'static', y usa 'http' o 'https'
+//   const isValidRoute =
+//     event.request.url.includes("/static/") ||
+//     event.request.url.startsWith("http://") ||
+//     event.request.url.startsWith("https://");
+//   if (event.request.method === "GET" && isValidRoute) {
+//     event.respondWith(
+//       caches.match(event.request).then((response) => {
+//         // Si el recurso está en caché, lo devuelve, de lo contrario, realiza la solicitud de red
+//         return (
+//           response ||
+//           fetch(event.request).then((fetchResponse) => {
+//             // Clona la respuesta y almacénala en caché
+//             return caches.open(CACHE_NAME).then((cache) => {
+//               cache.put(event.request, fetchResponse.clone());
+//               return fetchResponse;
+//             });
+//           })
+//         );
+//       })
+//     );
+//   }
+// });
